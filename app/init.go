@@ -1,7 +1,9 @@
 package app
 
 import (
+	"fmt"
 	"github.com/revel/revel"
+	"github.com/tg123/go-htpasswd"
 )
 
 var (
@@ -30,12 +32,7 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
-	// Register startup functions with OnAppStart
-	// revel.DevMode and revel.RunMode only work inside of OnAppStart. See Example Startup Script
-	// ( order dependent )
-	// revel.OnAppStart(ExampleStartupScript)
-	// revel.OnAppStart(InitDB)
-	// revel.OnAppStart(FillCache)
+	revel.OnAppStart(InitializeHtPasswd)
 }
 
 // HeaderFilter adds common security headers
@@ -50,10 +47,25 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	fc[0](c, fc[1:]) // Execute the next filter stage.
 }
 
-//func ExampleStartupScript() {
-//	// revel.DevMod and revel.RunMode work here
-//	// Use this script to check for dev mode and set dev/prod startup scripts here!
-//	if revel.DevMode == true {
-//		// Dev mode
-//	}
-//}
+var HtPasswd *htpasswd.File
+
+func HtPasswdBadLine(err error) {
+	revel.AppLog.Error(fmt.Sprintf("Bad line in password file: %s", err.Error()))
+}
+
+func InitializeHtPasswd() {
+	revel.AppLog.Info("Loading htpasswd file")
+
+	htpasswdfile := revel.Config.StringDefault("htpa.htpasswdFile", "")
+	if htpasswdfile == "" {
+		revel.AppLog.Fatal(fmt.Sprintf("Htpasswd file was not set"))
+		return
+	}
+
+	var err error
+	HtPasswd, err = htpasswd.New(htpasswdfile, htpasswd.DefaultSystems, HtPasswdBadLine)
+	if err != nil {
+		revel.AppLog.Fatal(fmt.Sprintf("Error loading file '%s': %s", htpasswdfile, err.Error()))
+		return
+	}
+}

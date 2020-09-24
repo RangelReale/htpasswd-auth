@@ -8,6 +8,12 @@ module:testrunner
 
 
 GET     /                                       App.Index
+GET     /auth                                   Auth.Index
+GET     /auth/login                             Auth.Login
+POST    /auth/loginsave                         Auth.LoginSave
+GET     /auth/loginok                           Auth.LoginOk
+GET     /auth/logout                            Auth.Logout
+GET     /check                                  Check.Index
 
 # Ignore favicon requests
 GET     /favicon.ico                            404
