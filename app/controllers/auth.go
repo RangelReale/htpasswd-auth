@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"encoding/base64"
+	"fmt"
 	"github.com/RangelReale/htpasswd-auth/app/models"
 	"github.com/revel/revel"
+	"net/http"
 	"strings"
+	"time"
 )
 
 type Auth struct {
@@ -43,10 +47,23 @@ func (c Auth) LoginSave(username, password, redirectUrl string) revel.Result {
 		return c.Redirect(Auth.Login)
 	}
 
+	// Encode cookie like Base Auth
+	cookieValue := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", user.Username, user.Password)))
+
+	// Set cookie expiration (by default, 24 hours)
+	expiration := time.Now().Add(time.Duration(revel.Config.IntDefault("htpa.cookieExpireMinutes", int(24 * time.Hour))))
+
+	c.SetCookie(&http.Cookie{
+		Name: revel.Config.StringDefault("htpa.cookieName", "htpa_auth"),
+		Value: cookieValue,
+		Path: "/",
+		Domain: revel.Config.StringDefault("htpa.cookieDomain", ""),
+		Expires: expiration,
+	})
+
 	if strings.TrimSpace(redirectUrl) == "" {
 		return c.Redirect(Auth.LoginOk)
 	}
-
 	return c.Redirect(redirectUrl)
 }
 
