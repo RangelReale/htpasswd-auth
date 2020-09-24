@@ -51,13 +51,13 @@ func (c Auth) LoginSave(username, password, redirectUrl string) revel.Result {
 	cookieValue := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", user.Username, user.Password)))
 
 	// Set cookie expiration (by default, 24 hours)
-	expiration := time.Now().Add(time.Duration(revel.Config.IntDefault("htpa.cookieExpireMinutes", int(24 * time.Hour))))
+	expiration := time.Now().Add(time.Duration(revel.Config.IntDefault("htpa.cookieExpireMinutes", int(24*time.Hour))))
 
 	c.SetCookie(&http.Cookie{
-		Name: revel.Config.StringDefault("htpa.cookieName", "htpa_auth"),
-		Value: cookieValue,
-		Path: "/",
-		Domain: revel.Config.StringDefault("htpa.cookieDomain", ""),
+		Name:    revel.Config.StringDefault("htpa.cookieName", "htpa_auth"),
+		Value:   cookieValue,
+		Path:    "/",
+		Domain:  revel.Config.StringDefault("htpa.cookieDomain", ""),
 		Expires: expiration,
 	})
 
@@ -72,6 +72,13 @@ func (c Auth) LoginOk() revel.Result {
 }
 
 func (c Auth) Logout() revel.Result {
+	c.SetCookie(&http.Cookie{
+		Name:   revel.Config.StringDefault("htpa.cookieName", "htpa_auth"),
+		Value:  "",
+		Path:   "/",
+		Domain: revel.Config.StringDefault("htpa.cookieDomain", ""),
+		MaxAge: -1,
+	})
+
 	return c.Render()
 }
-
