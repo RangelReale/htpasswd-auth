@@ -7,7 +7,6 @@ module:testrunner
 # module:jobs
 
 
-GET     /                                       App.Index
 GET     /auth                                   Auth.Index
 GET     /auth/login                             Auth.Login
 POST    /auth/loginsave                         Auth.LoginSave
