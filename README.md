@@ -1,5 +1,4 @@
 # A nginx `auth_request` and traefik `ForwardAuth` authentication service, based on cookies and htpasswd.
-[![Build Status](https://travis-ci.org/antifuchs/htpasswd-login.svg?branch=master)](https://travis-ci.org/antifuchs/htpasswd-login)
 
 Authentication service for
 nginx's
