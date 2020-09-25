@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/karlseguin/ccache/v2"
 	"github.com/revel/revel"
 	"github.com/tg123/go-htpasswd"
 )
@@ -33,6 +34,7 @@ func init() {
 	}
 
 	revel.OnAppStart(InitializeHtPasswd)
+	revel.OnAppStart(InitializeCheckCache)
 }
 
 // HeaderFilter adds common security headers
@@ -68,4 +70,11 @@ func InitializeHtPasswd() {
 		revel.AppLog.Fatal(fmt.Sprintf("Error loading file '%s': %s", htpasswdfile, err.Error()))
 		return
 	}
+}
+
+var CheckCache *ccache.Cache
+
+func InitializeCheckCache() {
+	revel.AppLog.Info("Initializing check cache")
+	CheckCache = ccache.New(ccache.Configure().MaxSize(100).ItemsToPrune(10))
 }

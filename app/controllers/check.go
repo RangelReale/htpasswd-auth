@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/RangelReale/htpasswd-auth/app"
+	"github.com/karlseguin/ccache/v2"
 	"github.com/revel/revel"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Check struct {
@@ -26,17 +28,35 @@ func (c Check) Index() revel.Result {
 	if err == nil {
 		if cookie != nil && cookie.GetValue() != "" {
 			// c.Log.Debugf("Cookie value: %s", cookie.GetValue())
+
+			unheader := revel.Config.StringDefault("htpa.usernameHeader", "")
+
+			checkCacheMinutes := revel.Config.IntDefault("htpa.cookieCheckCacheMinutes", 10)
+
+			// check if is in cache
+			var authcache *ccache.Item = nil
+			if checkCacheMinutes > 0 {
+				authcache = app.CheckCache.Get(cookie.GetValue())
+				// If don't need to parse the cookie to get the user name, return faster
+				if authcache != nil && unheader == "" {
+					c.Response.Status = http.StatusOK
+					return c.RenderText("OK")
+				}
+			}
+
 			authstr, err := base64.StdEncoding.DecodeString(cookie.GetValue())
 			if err == nil {
 				authpair := strings.SplitN(string(authstr), ":", 2)
 				if len(authpair) == 2 {
-					if app.HtPasswd.Match(authpair[0], authpair[1]) {
+					if authcache != nil || app.HtPasswd.Match(authpair[0], authpair[1]) {
 						c.Response.Status = http.StatusOK
-						unheader := revel.Config.StringDefault("htpa.usernameHeader", "")
 						if unheader != "" {
 							c.Response.Out.Header().Add(unheader, authpair[0])
 						}
-
+						if authcache == nil && checkCacheMinutes > 0 {
+							// Save to check cache
+							app.CheckCache.Set(cookie.GetValue(), true, time.Minute*time.Duration(checkCacheMinutes))
+						}
 						return c.RenderText("OK")
 					}
 				} else {
