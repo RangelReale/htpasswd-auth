@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/karlseguin/ccache/v2"
 	"github.com/revel/revel"
+	"github.com/revel/revel/logger"
 	"github.com/tg123/go-htpasswd"
+	"os"
 )
 
 var (
@@ -33,6 +35,7 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
+	//revel.OnAppStart(InitializeJSONLogs)
 	revel.OnAppStart(InitializeHtPasswd)
 	revel.OnAppStart(InitializeCheckCache)
 }
@@ -53,6 +56,23 @@ var HtPasswd *htpasswd.File
 
 func HtPasswdBadLine(err error) {
 	revel.AppLog.Error(fmt.Sprintf("Bad line in password file: %s", err.Error()))
+}
+
+// NOT WORKING
+func InitializeJSONLogs() {
+	revel.AppLog.Info("Configuring json logs")
+
+	logger.LogFunctionMap["stdoutjson"] =
+		func(c *logger.CompositeMultiHandler, options *logger.LogOptions) {
+			// Set the json formatter to os.Stdout, replace any existing handlers for the level specified
+			c.SetJson(os.Stdout, options)
+		}
+
+	logger.LogFunctionMap["stderrjson"] =
+		func(c *logger.CompositeMultiHandler, options *logger.LogOptions) {
+			// Set the json formatter to os.Stdout, replace any existing handlers for the level specified
+			c.SetJson(os.Stderr, options)
+		}
 }
 
 func InitializeHtPasswd() {
